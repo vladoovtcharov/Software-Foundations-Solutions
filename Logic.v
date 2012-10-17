@@ -139,7 +139,8 @@ Proof.
 Theorem proj2 : forall P Q : Prop, 
   P /\ Q -> Q.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. inversion H. apply H1.
+Qed.
 (** [] *)
 
 Theorem and_commut : forall P Q : Prop, 
@@ -178,7 +179,8 @@ Theorem and_assoc : forall P Q R : Prop,
 Proof.
   intros P Q R H.
   inversion H as [HP [HQ HR]].
-(* FILL IN HERE *) Admitted.
+inversion H. inversion H1. split. split. apply HP. apply HQ. apply HR.
+Qed.
 (** [] *)
 
 (** **** Exercise: 2 stars, recommended (even__ev) *)
@@ -194,15 +196,27 @@ Proof.
 Theorem even__ev : forall n : nat,
   (even n -> ev n) /\ (even (S n) -> ev (S n)).
 Proof.
-  (* Hint: Use induction on [n]. *)
-  (* FILL IN HERE *) Admitted.
-(** [] *)
+   intros. induction n. split.
+   intro H. apply ev_0. intro H. inversion H.
+   split. intros. apply IHn. apply H.
+   intros. apply ev_SS. apply IHn. apply H.
+Qed.
+(** [] **)
 
 (** **** Exercise: 2 stars, optional (conj_fact) *)
 (** Construct a proof object demonstrating the following proposition. *)
+(*
+Variable P Q: Prop.
+Variable H : P /\ Q.
+Check proj1 P Q H.
+Check and.
+*)
+
 
 Definition conj_fact : forall P Q R, P /\ Q -> Q /\ R -> P /\ R :=
-  (* FILL IN HERE *) admit.
+  fun (P Q R: Prop) (H0: P /\ Q) (H1: Q /\ R) =>
+    conj P R (proj1 P Q H0) (proj2 Q R H1).
+ 
 (** [] *)
 
 (* ###################################################### *)
@@ -239,12 +253,17 @@ Proof.
 Theorem iff_refl : forall P : Prop, 
   P <-> P.
 Proof. 
-  (* FILL IN HERE *) Admitted.
+  intros. split. intro hP. apply hP.
+  intro hP. apply hP.
+Qed.
 
 Theorem iff_trans : forall P Q R : Prop, 
   (P <-> Q) -> (Q <-> R) -> (P <-> R).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. split. 
+   inversion H. inversion H0. intro hP. apply H1 in hP.  apply H3 in hP. apply hP.
+   inversion H. inversion H0. intro hR. apply H4 in hR. apply H2 in hR. apply hR.
+Qed.
 
 (** Hint: If you have an iff hypothesis in the context, you can use
     [inversion] to break it into two separate implications.  (Think
@@ -259,10 +278,12 @@ Proof.
     fun, write your proof as an explicit proof object, rather than
     using tactics. (_Hint_: if you make use of previously defined
     theorems, you should only need a single line!) *)
+Check iff.
 
 Definition beautiful_iff_gorgeous :
-  forall n, beautiful n <-> gorgeous n :=
-  (* FILL IN HERE *) admit.
+  forall n, beautiful n <-> gorgeous n := 
+  
+  fun (n:nat) => conj (beautiful n -> gorgeous n) (gorgeous n -> beautiful n) (beautiful__gorgeous n) (gorgeous__beautiful n).
 (** [] *)
 
 (** Some of Coq's tactics treat [iff] statements specially, thus
@@ -331,8 +352,14 @@ Proof.
 (** **** Exercise: 2 stars, optional (or_commut'') *)
 (** Try to write down an explicit proof object for [or_commut] (without
     using [Print] to peek at the ones we already defined!). *)
+Check or_introl.
+Definition or_comm : forall P Q, P \/ Q -> Q \/ P  := 
+  fun (P Q: Prop) (H0: P \/ Q) => 
+    match H0 with
+    | or_introl pP => or_intror Q P pP
+    | or_intror pQ => or_introl Q P pQ
+    end.
 
-(* FILL IN HERE *)
 (** [] *)
 
 Theorem or_distributes_over_and_1 : forall P Q R : Prop,
@@ -349,15 +376,22 @@ Proof.
 (** **** Exercise: 2 stars, recommended (or_distributes_over_and_2) *)
 Theorem or_distributes_over_and_2 : forall P Q R : Prop,
   (P \/ Q) /\ (P \/ R) -> P \/ (Q /\ R).
-Proof.
-  (* FILL IN HERE *) Admitted.
+Proof. intros. inversion H as [PorQ PorR]. 
+  inversion PorQ. 
+  Case "P is true". apply or_introl. apply H0.
+  Case "Q is true". inversion PorR.  
+    SCase "P and Q are true". apply or_introl. apply H1.
+    SCase "Q and R are true". apply or_intror. split. apply H0. apply H1.
+Qed.
 (** [] *)
 
 (** **** Exercise: 1 star, optional (or_distributes_over_and) *)
 Theorem or_distributes_over_and : forall P Q R : Prop,
   P \/ (Q /\ R) <-> (P \/ Q) /\ (P \/ R).
-Proof.
-  (* FILL IN HERE *) Admitted.
+Proof. intros. split. 
+  intro H. apply or_distributes_over_and_1. apply H.
+  intro H. apply or_distributes_over_and_2. apply H.
+Qed.
 (** [] *)
 
 (* ################################################### *)
@@ -395,17 +429,28 @@ Proof.
 Theorem andb_false : forall b c,
   andb b c = false -> b = false \/ c = false.
 Proof. 
-  (* FILL IN HERE *) Admitted.
+  intros b c H. destruct b. 
+  Case "b = true". destruct c.
+    SCase "c = true". simpl in H. inversion H.
+    SCase "c = false". apply or_intror. reflexivity.
+  Case "b= false". apply or_introl. reflexivity.
+Qed.
 
 Theorem orb_true : forall b c,
   orb b c = true -> b = true \/ c = true.
-Proof.
-  (* FILL IN HERE *) Admitted.
+Proof. intros.
+  destruct b. apply or_introl. reflexivity.
+  apply or_intror. destruct c. reflexivity.
+  simpl in H. inversion H.
+Qed.
 
 Theorem orb_false : forall b c,
   orb b c = false -> b = false /\ c = false.
-Proof. 
-  (* FILL IN HERE *) Admitted.
+Proof. intros.
+  destruct b. simpl in H. inversion H.
+  destruct c. simpl in H. inversion H.
+  split; reflexivity.
+Qed.
 (** [] *)
 
 (* ################################################### *)
@@ -422,7 +467,7 @@ Inductive False : Prop := .
 (** **** Exercise: 1 star (False_ind_principle) *)
 (** Can you predict the induction principle for falsehood? *)
 
-(* Check False_ind. *)
+Check False_ind.
 (** [] *)
 
 (** Since [False] has no constructors, inverting an assumption
@@ -478,7 +523,7 @@ Proof.
     trivial to give evidence.  Alternatively, you may find it easiest
     to start with the induction principle and work backwards to the
     inductive definition.) *)
-
+Inductive True := T.
 (* FILL IN HERE *)
 (** [] *)
 
@@ -541,15 +586,18 @@ Proof.
 (** **** Exercise: 2 stars, recommended (contrapositive) *)
 Theorem contrapositive : forall P Q : Prop,
   (P -> Q) -> (~Q -> ~P).
-Proof.
-  (* FILL IN HERE *) Admitted.
+Proof. intros. unfold not. unfold not in H0.
+  intro hP. apply H in hP. apply H0 in hP. apply hP.
+Qed.
 (** [] *)
 
 (** **** Exercise: 1 star (not_both_true_and_false) *)
 Theorem not_both_true_and_false : forall P : Prop,
   ~ (P /\ ~P).
-Proof. 
-  (* FILL IN HERE *) Admitted.
+Proof. intros.
+  unfold not. intro H.  inversion H.
+  apply H1 in H0. apply H0.
+Qed.
 (** [] *)
 
 (** **** Exercise: 1 star (informal_not_PNP) *)
@@ -574,7 +622,9 @@ Theorem ev_not_ev_S : forall n,
   ev n -> ~ ev (S n).
 Proof. 
   unfold not. intros n H. induction H. (* not n! *)
-  (* FILL IN HERE *) Admitted.
+  intro H. inversion H. 
+  intro. inversion H0. apply IHev in H2. apply H2.
+Qed.
 (** [] *)
 
 (** Note that some theorems that are true in classical logic are _not_
@@ -610,6 +660,14 @@ Definition de_morgan_not_and_not := forall P Q:Prop,
 Definition implies_to_or := forall P Q:Prop, 
   (P->Q) -> (~P\/Q). 
 
+Theorem peirce_implies_classic: peirce -> classic.
+Proof. intros P. unfold peirce in P. unfold classic.
+  intros. unfold not in H. apply P with (Q:= False).
+  intro. apply H in H0. inversion H0.
+Qed.
+
+
+
 (* FILL IN HERE *)
 (** [] *)
 
@@ -643,15 +701,33 @@ Proof.
 Theorem not_eq_beq_false : forall n n' : nat,
      n <> n' ->
      beq_nat n n' = false.
-Proof. 
-  (* FILL IN HERE *) Admitted.
+Proof. intros.
+  unfold not in H. 
+   
+ generalize dependent n'.
+  induction n. intros. induction n'. simpl. apply ex_falso_quodlibet.
+   apply H. reflexivity.
+  simpl. reflexivity.
+  intros. simpl. destruct n'. reflexivity. apply IHn.
+  simpl in H.
+  intro. apply H. rewrite H0. reflexivity.
+Qed.
 (** [] *)
 
 (** **** Exercise: 2 stars, optional (beq_false_not_eq) *)
 Theorem beq_false_not_eq : forall n m,
   false = beq_nat n m -> n <> m.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. unfold not. induction n.
+  Case "n = 0". destruct m.
+    SCase "m = 0". simpl in H. inversion H.
+    SCase "m = S m'". discriminate.
+  Case "n = S n'". generalize dependent n. induction m.
+    SCase "m = 0". discriminate.
+    SCase "m = S m'".   intros. rewrite H0 in H.
+      simpl in H. rewrite <- beq_nat_refl in H. inversion H.
+Qed.
+
 (** [] *)
 
 (* ############################################################ *)
@@ -749,8 +825,9 @@ Proof.
 (** Complete the definition of the following proof object: *)
 
 Definition p : ex nat (fun n => beautiful (S n)) :=
-(* FILL IN HERE *) admit.
-(** [] *)
+  ex_intro _ (fun n => beautiful (S n)) 2 (b_3).
+  (** [] *)
+
 
 (** **** Exercise: 1 star (dist_not_exists) *)
 (** Prove that "[P] holds for all [x]" and "there is no [x] for
@@ -758,8 +835,9 @@ Definition p : ex nat (fun n => beautiful (S n)) :=
 
 Theorem dist_not_exists : forall (X:Type) (P : X -> Prop),
   (forall x, P x) -> ~ (exists x, ~ P x).
-Proof. 
-  (* FILL IN HERE *) Admitted.
+Proof. intros.
+  unfold not. intros. inversion H0. apply H1 in H. inversion H.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, optional (not_exists_dist) *)
@@ -770,18 +848,30 @@ Theorem not_exists_dist :
   excluded_middle ->
   forall (X:Type) (P : X -> Prop),
     ~ (exists x, ~ P x) -> (forall x, P x).
-Proof.
-  (* FILL IN HERE *) Admitted.
+Proof. intros. 
+  unfold excluded_middle in H.
+  unfold not in H0. unfold not in H.
+  destruct H with (P:= P x). apply H1.
+  apply ex_falso_quodlibet.
+  apply H0. exists x. apply H1.
+Qed.
+
 (** [] *)
 
 (** **** Exercise: 2 stars (dist_exists_or) *)
 (** Prove that existential quantification distributes over
     disjunction. *)
-
 Theorem dist_exists_or : forall (X:Type) (P Q : X -> Prop),
   (exists x, P x \/ Q x) <-> (exists x, P x) \/ (exists x, Q x).
-Proof.
-   (* FILL IN HERE *) Admitted.
+Proof. intros. split.
+  Case " -> ".  intro H. inversion H. inversion H0.
+    SCase "exists x, P x". apply or_introl. exists witness. apply H1.
+    SCase "exists x, Q x". apply or_intror. exists witness. apply H1.
+  Case " <- ".  intros H. inversion H. 
+    SCase "exists x, P x". inversion H0. exists witness. apply or_introl. apply H1.
+    SCase "exists x, Q x". inversion H0. exists witness. apply or_intror. apply H1.
+Qed.
+  
 (** [] *)
 
 (* Print dist_exists_or. *)
@@ -827,8 +917,10 @@ Notation "x =' y" := (eq' _ x y)
 
 Theorem two_defs_of_eq_coincide : forall (X:Type) (x y : X),
   x = y <-> x =' y.
-Proof.
-  (* FILL IN HERE *) Admitted.
+Proof. intros. split.
+  Case " -> ". intro H. inversion H. apply refl_equal'.
+  Case " <- ". intro H. inversion H. apply refl_equal.
+Qed.
 (** [] *)
 
 (** The advantage of the second definition is that the induction
@@ -1039,15 +1131,15 @@ Inductive next_even (n:nat) : nat -> Prop :=
 (** **** Exercise: 2 stars, recommended (total_relation) *)
 (** Define an inductive binary relation [total_relation] that holds
     between every pair of natural numbers. *)
+Inductive total_relation (n m:nat) : Prop :=
+  t_relation : total_relation n m.
 
-(* FILL IN HERE *)
 (** [] *)
 
 (** **** Exercise: 2 stars (empty_relation) *)
 (** Define an inductive binary relation [empty_relation] (on numbers)
     that never holds. *)
-
-(* FILL IN HERE *)
+Inductive empty_relation (n m:nat) := .
 (** [] *)
 
 (** **** Exercise: 3 stars, recommended (R_provability) *)
@@ -1084,8 +1176,43 @@ Inductive R : nat -> nat -> nat -> Prop :=
     [R].  That is, if [R m n o] is true, what can we say about [m],
     [n], and [o], and vice versa?
 *)
+Theorem R_fact_a : forall (m n o: nat), R m n o -> m + n = o.
+Proof. intros.
+  generalize dependent m. generalize dependent n.
+  induction o as [| o']. 
+  Case "o = 0". intros. induction H. 
+    SCase "c1". reflexivity.
+     simpl. rewrite IHR. reflexivity.
+     rewrite plus_comm. simpl. rewrite plus_comm. rewrite IHR. reflexivity.
+     simpl in IHR. rewrite plus_comm in IHR. simpl in IHR.
+     inversion IHR. rewrite plus_comm. reflexivity.
+     rewrite plus_comm. apply IHR.
 
-(* FILL IN HERE *)
+  Case "o = S o'". intros. induction H.
+    reflexivity.
+    simpl. rewrite IHR. reflexivity.
+    rewrite plus_comm. simpl. rewrite plus_comm. rewrite IHR. reflexivity.
+    simpl in IHR. rewrite plus_comm in IHR. simpl in IHR. inversion IHR. apply plus_comm.
+    rewrite plus_comm. apply IHR.
+Qed.
+
+Theorem R_fact_b : forall (m n o: nat), m + n = o -> R m n o.
+Proof. intros.
+  generalize dependent n. generalize dependent m. induction o.
+  intros. 
+    assert( forall (a b: nat) , a + b = 0 -> a = 0 /\ b = 0).
+      intros. destruct a. split. reflexivity. simpl in H0. apply H0.
+      simpl in H0. inversion H0.
+    apply H0 in H. inversion H. rewrite H1. rewrite H2. apply c1.
+  intros.
+    destruct m. simpl in H. rewrite H. apply c3. apply IHo. reflexivity.
+    simpl in H. apply c2. apply IHo. inversion H. reflexivity.
+Qed.
+
+Theorem R_fact : forall (m n o: nat), R m n o <-> m + n = o.
+Proof.  split. apply R_fact_a. apply R_fact_b.
+Qed.
+
 (** [] *)
 
 End R.
@@ -1096,7 +1223,8 @@ End R.
     asserts that [P] is true for every element of the list [l]. *)
 
 Inductive all (X : Type) (P : X -> Prop) : list X -> Prop :=
-  (* FILL IN HERE *)
+  | empty_all : all X P []
+  | cons_all : forall (x:X) (l: list X), all X P l -> P x -> all X P (x::l)
 .
 
 (** Recall the function [forallb], from the exercise
@@ -1114,6 +1242,9 @@ Fixpoint forallb {X : Type} (test : X -> bool) (l : list X) : bool :=
 
     Are there any important properties of the function [forallb] which
     are not captured by your specification? *)
+Theorem forall_implies_all : forall X (test: X -> bool) (l: list X), forallb test l = true -> all X (fun x => test x = true) l. 
+Admitted.
+
 
 (* FILL IN HERE *)
 (** [] *)

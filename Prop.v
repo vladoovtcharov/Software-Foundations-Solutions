@@ -271,10 +271,12 @@ Print eight_is_beautiful'''.
 Theorem six_is_beautiful :
   beautiful 6.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  apply b_sum with (n:= 3) (m:= 3).
+  apply b_3. apply b_3.
+Qed.
 
 Definition six_is_beautiful' : beautiful 6 :=
-  (* FILL IN HERE *) admit.
+  six_is_beautiful.
 (** [] *)
 
 (** **** Exercise: 1 star (nine_is_beautiful) *)
@@ -283,10 +285,12 @@ Definition six_is_beautiful' : beautiful 6 :=
 Theorem nine_is_beautiful :
   beautiful 9.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  apply b_sum with (n:= 3) (m:= 6).
+  apply b_3. apply six_is_beautiful.
+Qed.
 
 Definition nine_is_beautiful' : beautiful 9 :=
-  (* FILL IN HERE *) admit.
+  nine_is_beautiful.
 (** [] *)
 
 
@@ -336,20 +340,24 @@ Check b_plus3''.
 
 (** **** Exercise: 2 stars (b_times2) *)
 Theorem b_times2: forall n, beautiful n -> beautiful (2*n).
-Proof.
-    (* FILL IN HERE *) Admitted.
+Proof. intros. simpl. rewrite plus_0_r. apply b_sum with (n:= n) (m:= n).
+  apply H. apply H.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, optional (b_times2') *)
 (** Write a proof object corresponding to [b_times2] above *)
 
 Definition b_times2': forall n, beautiful n -> beautiful (2*n) :=
-  (* FILL IN HERE *) admit.
+b_times2.
 
 (** **** Exercise: 2 stars (b_timesm) *)
 Theorem b_timesm: forall n m, beautiful n -> beautiful (m*n).
 Proof.
-   (* FILL IN HERE *) Admitted.
+ intros. induction m. simpl. apply b_0. simpl. apply b_sum with (n:= n) (m:= m * n).
+  apply H. apply IHm.
+Qed.
+
 (** [] *)
 
 (* ####################################################### *)
@@ -431,28 +439,36 @@ Admitted.
 (** **** Exercise: 1 star (gorgeous_plus13) *)
 Theorem gorgeous_plus13: forall n, 
   gorgeous n -> gorgeous (13+n).
-Proof.
-   (* FILL IN HERE *) Admitted.
+Proof. intros.
+  apply g_plus5 in H. apply g_plus5 in H. apply g_plus3 in H.
+  simpl in H. apply H.
+Qed.
 (** [] *)
 
 (** **** Exercise: 2 stars (gorgeous_plus13_po):
 Give the proof object for theorem [gorgeous_plus13] above. *)
 
 Definition gorgeous_plus13_po: forall n, gorgeous n -> gorgeous (13+n):=
-   (* FILL IN HERE *) admit.
+  gorgeous_plus13.
 (** [] *)
 
 (** **** Exercise: 2 stars (gorgeous_sum) *)
 Theorem gorgeous_sum : forall n m,
   gorgeous n -> gorgeous m -> gorgeous (n + m).
-Proof.
- (* FILL IN HERE *) Admitted.
+Proof. intros.
+  induction H. simpl. apply H0.
+  apply g_plus3 in IHgorgeous. assumption.
+  apply g_plus5 in IHgorgeous. assumption.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars (beautiful__gorgeous) *)
 Theorem beautiful__gorgeous : forall n, beautiful n -> gorgeous n.
-Proof.
- (* FILL IN HERE *) Admitted.
+Proof. intros. induction H.
+  apply g_0. apply g_plus3 with (n:= 0).
+  apply g_0. apply g_plus5 with (n:= 0).
+  apply g_0. apply gorgeous_sum. assumption. assumption.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, optional (b_times2) *)
@@ -461,13 +477,21 @@ Proof.
 
 Lemma helper_g_times2 : forall x y z, x + (z + y)= z + x + y.
 Proof.
-   (* FILL IN HERE *) Admitted.
+  intros. rewrite plus_comm with z x. rewrite plus_assoc. reflexivity.
+Qed.
 
 Theorem g_times2: forall n, gorgeous n -> gorgeous (2*n).
 Proof.
    intros n H. simpl. 
    induction H.
-   (* FILL IN HERE *) Admitted.
+   simpl. apply g_0.
+   rewrite plus_0_r. rewrite helper_g_times2 with (3 + n) n 3.
+   rewrite plus_0_r in IHgorgeous. apply g_plus3 in IHgorgeous.
+   apply g_plus3 in IHgorgeous. rewrite? plus_assoc. rewrite? plus_assoc in IHgorgeous. assumption.
+   rewrite plus_0_r. rewrite helper_g_times2 with (5 + n) n 5.
+   rewrite plus_0_r in IHgorgeous. apply g_plus5 in IHgorgeous.
+   apply g_plus5 in IHgorgeous. rewrite? plus_assoc. rewrite? plus_assoc in IHgorgeous. assumption.
+Qed.
 (** [] *)
 
 
@@ -505,8 +529,11 @@ Inductive ev : nat -> Prop :=
 
 Theorem double_even : forall n,
   ev (double n).
-Proof.
-  (* FILL IN HERE *) Admitted.
+Proof. intro n.
+  rewrite double_plus. induction n.
+  simpl. apply ev_0. simpl. rewrite plus_comm.
+  simpl. apply ev_SS. apply IHn.
+Qed.
 (** [] *)
 
 (** **** Exercise: 4 stars, optional (double_even_pfobj) *)
@@ -612,8 +639,10 @@ Qed.
 
 Theorem ev_sum : forall n m,
    ev n -> ev m -> ev (n+m).
-Proof. 
-  (* FILL IN HERE *) Admitted.
+Proof. intros. induction H.
+  simpl. apply H0. simpl. apply ev_SS.
+  apply IHev.
+Qed.
 (** [] *)
 
 (** Here's another situation where we want to analyze evidence for
@@ -680,8 +709,8 @@ Proof.
 (** **** Exercise: 1 star (inversion_practice) *)
 Theorem SSSSev__even : forall n,
   ev (S (S (S (S n)))) -> ev n.
-Proof.
-  (* FILL IN HERE *) Admitted.
+Proof. intros. inversion H. inversion H1. apply H3.
+Qed.
 
 (** The [inversion] tactic can also be used to derive goals by showing
     the absurdity of a hypothesis. *)
@@ -689,7 +718,8 @@ Proof.
 Theorem even5_nonsense : 
   ev 5 -> 2 + 2 = 9.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. inversion H. inversion H1. inversion H3.
+Qed.
 (** [] *)
 
 (** We can generally use [inversion] on inductive propositions.
@@ -711,8 +741,11 @@ Proof.
 
 Theorem ev_ev__ev : forall n m,
   ev (n+m) -> ev n -> ev m.
-Proof.
-  (* FILL IN HERE *) Admitted.
+Proof. intros. induction H0.
+  simpl in H. apply H.
+  apply IHev. simpl in H. inversion H.
+  apply H2.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, optional (ev_plus_plus) *)
@@ -723,8 +756,14 @@ Proof.
 
 Theorem ev_plus_plus : forall n m p,
   ev (n+m) -> ev (n+p) -> ev (m+p).
-Proof.
-  (* FILL IN HERE *) Admitted.
+Proof. intros.
+  apply ev_sum with (n + m) (n + p) in H.
+  rewrite plus_swap in H. rewrite <- plus_assoc in H. 
+  rewrite plus_assoc with n n (m+p) in H. 
+  apply ev_ev__ev with (n:= n+n) (m:=m+p) in H. apply H.
+  rewrite <- double_plus. apply double_even.
+  apply H0.
+Qed.
 (** [] *)
 
 (* ##################################################### *)
@@ -914,8 +953,11 @@ Proof.
 
 Theorem plus_one_r' : forall n:nat, 
   n + 1 = S n.
-Proof.
-  (* FILL IN HERE *) Admitted.
+Proof. apply nat_ind.
+  reflexivity.  
+  intros. simpl. rewrite H. reflexivity.
+Qed.
+
 (** [] *)
 
 (** The induction principles that Coq generates for other datatypes
@@ -979,6 +1021,7 @@ Inductive natlist1 : Type :=
   | nnil1 : natlist1
   | nsnoc1 : natlist1 -> nat -> natlist1.
 
+Check natlist1_ind.
 (** Now what will the induction principle look like? *)
 (** [] *)
 
@@ -1006,8 +1049,10 @@ Inductive natlist1 : Type :=
     Give an [Inductive] definition of [ExSet]: *)
 
 Inductive ExSet : Type :=
-  (* FILL IN HERE *)
+  | con1 : bool -> ExSet
+  | con2 : nat -> ExSet -> ExSet
 .
+Check ExSet_ind.
 (** [] *)
 
 (** What about polymorphic datatypes?
@@ -1036,7 +1081,11 @@ Inductive ExSet : Type :=
 (** **** Exercise: 1 star (tree) *)
 (** Write out the induction principle that Coq will generate for
    the following datatype.  Compare your answer with what Coq
-   prints. *)
+   prints.
+forall (X: Type) (P: tree X-> Prop),
+  forall x : X, P (leaf X x) ->
+  forall t1 t2: tree X, P t1 -> P t2 -> P (node t1 t2) -> forall t : tree, P t 
+ *)
 
 Inductive tree (X:Type) : Type :=
   | leaf : X -> tree X
@@ -1055,6 +1104,12 @@ Check tree_ind.
                forall n : nat, P (constr3 X m n)) ->
             forall m : mytype X, P m                   
 *) 
+Inductive mytype (X: Type) : Type :=
+  | constr1 : X -> mytype X
+  | constr2 : nat -> mytype X
+  | constr3 : mytype X -> nat -> mytype X
+.
+Check mytype_ind.
 (** [] *)
 
 (** **** Exercise: 1 star, optional (foo) *)
@@ -1068,6 +1123,12 @@ Check tree_ind.
                (forall n : nat, P (f1 n)) -> P (quux X Y f1)) ->
              forall f2 : foo X Y, P f2       
 *) 
+Inductive foo (X: Type) (Y: Type) : Type :=
+  | bar : X -> foo X Y
+  | baz : Y -> foo X Y
+  | quux : (nat -> foo X Y) -> foo X Y
+.
+Check foo_ind.
 (** [] *)
 
 (** **** Exercise: 1 star, optional (foo') *)
@@ -1076,16 +1137,16 @@ Check tree_ind.
 Inductive foo' (X:Type) : Type :=
   | C1 : list X -> foo' X -> foo' X
   | C2 : foo' X.
-
+Check foo'_ind.
 (** What induction principle will Coq generate for [foo']?  Fill
    in the blanks, then check your answer with Coq.)
      foo'_ind :
         forall (X : Type) (P : foo' X -> Prop),
               (forall (l : list X) (f : foo' X),
-                    _______________________ -> 
-                    _______________________   ) ->
-             ___________________________________________ ->
-             forall f : foo' X, ________________________
+                    P f -> 
+                    P C1 l f   ) ->
+             P C2 ->
+             forall f : foo' X, P f
 *)
 
 (** [] *)
@@ -1397,15 +1458,20 @@ Proof.
     [true_upto_n__true_everywhere] that makes
     [true_upto_n_example] work. *)
 
-(* 
-Fixpoint true_upto_n__true_everywhere 
+
+Fixpoint true_upto_n__true_everywhere (n: nat) (f: nat -> Prop) : Prop :=
+  match n with
+  | O => forall n: nat, f n
+  | S n' => f (S n') -> true_upto_n__true_everywhere n' f
+  end.
+
 (* FILL IN HERE *)
 
 Example true_upto_n_example :
     (true_upto_n__true_everywhere 3 (fun n => even n))
   = (even 3 -> even 2 -> even 1 -> forall m : nat, even m).
 Proof. reflexivity.  Qed.
-*)
+
 (** [] *)
 
 (* ####################################################### *)
@@ -1480,7 +1546,62 @@ Definition b_16 : beautiful 16 :=
        forall l, pal l -> l = rev l.
 *)
 
-(* FILL IN HERE *)
+
+
+
+(* Using the simpler definition the proofs are trivial, 
+  the downside is to use this datasctructure we must prove l = rev l
+*)
+Inductive pal' {X: Type} : list X -> Prop :=
+  | palc' : forall l, l = rev l -> pal' l.
+
+Theorem pal_rev':  forall X (l:list X), pal' l -> l = rev l.
+  intros. induction H.  apply H.
+Qed.
+
+Theorem pal_self_rev' : forall X (l: list X),
+  pal' (l ++ rev l).
+intros.  apply palc'. induction l.
+  Case "l = []". reflexivity. 
+  Case "l = x :: l'". simpl. rewrite 2! snoc_append. 
+    rewrite <- app_assoc. rewrite rev_append. simpl. 
+    rewrite <- IHl. reflexivity.
+Qed.
+
+Theorem rev_pal' : forall X (l: list X) (x: X), 
+  l = rev l -> pal' l.
+Proof. intros.
+  apply palc'. apply H.
+Qed.
+
+(*
+  a more constructive definition of palindrones
+*)
+Inductive pal {X:Type} : list X -> Prop :=
+  | pnil : pal []
+  | pone : forall (x: X), pal [x]
+  | pcons : forall (x: X) (l: list X), pal l -> pal (x :: l ++ [x]).
+
+
+Theorem pal_self_rev : forall X (l: list X),
+  pal (l ++ rev l).
+Proof.
+  intros. induction l. 
+  Case "l = []". simpl. apply pnil. 
+  Case "l = x :: l'". simpl.
+    rewrite snoc_append. rewrite <- app_assoc.
+    apply pcons. apply IHl.
+Qed.
+ 
+Theorem pal_rev:  forall X (l:list X), pal l -> l = rev l.
+  intros. induction H. 
+  Case "pal l = []". reflexivity. 
+  Case "pal l = [x]". reflexivity.
+  Case "pal l = x :: l' ++ x". simpl. 
+    rewrite snoc_append. rewrite rev_append.
+    rewrite IHpal at 1. reflexivity.
+Qed.
+
 (** [] *)
 
 (** **** Exercise: 5 stars, optional (palindrome_converse) *)
@@ -1488,8 +1609,200 @@ Definition b_16 : beautiful 16 :=
     that
      forall l, l = rev l -> pal l.
 *)
+  
 
-(* FILL IN HERE *)
+Theorem falso : forall (P:Prop),
+  False -> P.
+Proof.
+  intros P contra.
+  inversion contra. Qed.
+
+Lemma fib_ind :
+ forall P:nat -> Prop,
+   P 0 ->
+   P 1 -> 
+  (forall n:nat, P n -> P (S n) -> P (S (S n))) -> 
+  forall n:nat, P n.
+Proof.
+ intros P H0 H1 HSSn n.
+ cut (P n /\ P (S n)). intro H. inversion H. apply H2.
+ induction n. split. apply H0. apply H1.
+ split. inversion IHn. apply H2. apply HSSn. inversion IHn. apply H.
+ inversion IHn. apply H2.
+Qed.
+
+
+
+
+Lemma length_app :
+ forall X (l l':list X), length (l ++ l') = length l + length l'.
+Proof.
+  intros X l; elim l; simpl; auto.
+Qed.
+
+Lemma rev_app_rev : forall X (a b:list X),
+  rev a ++ rev b = rev (b ++ a).
+Proof. intros X a. induction a; intros.
+  rewrite app_r_nil. reflexivity.
+  simpl. rewrite snoc_append. rewrite app_assoc.
+  remember ([x] ++ rev b) as xrb.
+  rewrite <- rev_involutive with X xrb. rewrite IHa.
+  simpl in Heqxrb. rewrite Heqxrb. simpl. rewrite snoc_append.
+  rewrite rev_involutive. rewrite app_assoc. simpl. reflexivity.
+Qed.
+
+Definition tail {X} (l: list X) : list X :=
+  match l with
+  | [] => []
+  | x :: l => l
+  end.
+
+Definition init {X} (l: list X) : list X := rev (tail (rev l)).
+
+Definition lfirst {X} (l: list X) : list X :=
+  match l with
+  | [] => []
+  | x :: l => [x]
+  end.
+
+Definition llast {X} (l: list X) : list X := rev (lfirst (rev l)).
+
+
+Theorem first_app_tail : forall X (l: list X),
+  l = lfirst l ++ tail l.
+Proof. intros.
+  destruct l. reflexivity.
+  simpl. reflexivity.
+Qed.
+
+
+Theorem init_app_last : forall X (l: list X),
+  l = init l ++ llast l.
+Proof. intros.
+  unfold init. unfold llast. rewrite rev_app_rev.
+  rewrite <- rev_involutive at 1. rewrite <- rev_bij.
+  apply first_app_tail.
+Qed.
+
+Theorem snoc_tail_almost_comm : forall X (x: X) (l: list X),
+  l <> [] -> tail (snoc l x) = snoc (tail l) x.
+Proof. intros. destruct l. apply falso.  apply H. reflexivity. reflexivity.
+Qed.
+
+Theorem cons_init_almost_comm : forall X (x: X) (l: list X),
+  l <> [] -> init (x :: l) = x :: init l.
+Proof. intros. unfold init.
+  rewrite <- rev_switch. simpl. rewrite rev_involutive.
+  apply snoc_tail_almost_comm. rewrite rev_bij. rewrite rev_involutive.
+  simpl. apply H.
+Qed.
+
+
+Lemma lfirst_almost_init_inv : forall X (x y: X) (l: list X),
+  lfirst (init (x::y::l)) = lfirst (x::y::l).
+Proof. intros. unfold init. remember (y::l) as yl. simpl.
+  rewrite snoc_tail_almost_comm. rewrite snoc_append.
+  rewrite rev_append. reflexivity.
+  rewrite Heqyl. rewrite rev_bij. rewrite rev_involutive. simpl. 
+  discriminate.
+Qed.
+
+
+
+Theorem split_ends : forall X (l: list X) (x y: X),
+ (x::y::l) = lfirst (x::y::l) ++ tail (init (x::y::l)) ++ llast (x::y::l).
+Proof. intros.  
+  rewrite init_app_last at 1.
+  rewrite first_app_tail with (l := init (x::y::l)) at 1.
+  rewrite lfirst_almost_init_inv. reflexivity.
+Qed.
+
+
+
+Theorem first_length : forall X (l: list X), l <> [] -> length (lfirst l) = 1.
+Proof. intros.  destruct l. apply falso. apply H. reflexivity.
+  reflexivity.
+Qed.
+
+Theorem length_rev : forall X (l: list X), length l = length (rev l).
+Proof. intros. induction l. reflexivity.
+ simpl. rewrite length_snoc' with (n:= (length l)). reflexivity.
+ symmetry. apply IHl.
+Qed.
+
+Theorem last_length : forall X (l: list X), l <> [] -> length (llast l) = 1.
+Proof. intros. unfold llast. rewrite <- length_rev. apply first_length. 
+  destruct l. apply falso. apply H. reflexivity. rewrite rev_bij.
+  rewrite rev_involutive.   simpl. discriminate.
+Qed.
+
+Theorem first_single : forall X (x y:X) (l: list X), l <> [] -> exists k, lfirst (l) = [k].
+Proof. intros. induction l. unfold not in H.  apply falso. apply H. reflexivity.
+  exists x0. reflexivity.
+Qed.
+
+Theorem last_single : forall X (x y:X) (l: list X), l <> [] -> exists k, llast (l) = [k].
+Proof. intros. induction l. unfold not in H.  apply falso. apply H. reflexivity.
+unfold llast. assert (exists z, lfirst (rev (x0 :: l)) =  [z]).
+  apply first_single. assumption. assumption. rewrite rev_bij. rewrite rev_involutive. simpl. discriminate.
+  inversion H0. rewrite H1. exists x1. reflexivity.
+Qed.
+
+
+Theorem app_l_eq : forall X (l1 l2 m: list X), m ++ l1 = m ++ l2 -> l1 = l2.
+Proof. intros. induction m. simpl in H. apply H.
+ inversion H. apply IHm in H1. apply H1.
+Qed.
+
+Theorem app_r_eq : forall X (l1 l2 m: list X), l1 ++ m = l2 ++ m -> l1 = l2.
+Proof. intros. rewrite rev_bij in H. rewrite <- 2? rev_app_rev in H.
+ apply app_l_eq in H. rewrite <- rev_bij in H. apply H.
+Qed. 
+
+Theorem list_induction : forall X (P : list X -> Prop),
+       P [] -> 
+       (forall (x : X), P [x]) ->
+       (forall (x y : X) (l : list X), P l -> P (x :: l ++ [y])) ->
+       forall l : list X, P l.
+Proof. 
+ intros.
+ cut (forall (n:nat) (l:list X), length l = n -> P l).
+ Case "Proof of assertion". intros.
+ eapply H2. reflexivity.
+ intro n. pattern n. apply fib_ind.
+ Case "length is 0".
+ intros. apply length_0_nil in H2. rewrite H2. apply H.
+ Case "length is 1".
+ intros. destruct l0. simpl in H2. inversion H2.
+ simpl in H2. inversion H2. apply length_0_nil in H4. rewrite H4. apply H0.
+ Case "length is S S n".
+ intros. destruct l0. simpl in H4. inversion H4.
+ destruct l0. simpl in H4. inversion H4.
+ rewrite split_ends. simpl.
+ rewrite split_ends in H4. simpl in H4.
+ inversion H4. assert(x::x0::l0 <> []).
+ unfold not. intro contra. inversion contra.
+ apply last_single in H5. inversion H5.
+ rewrite H7.  apply H1.
+ apply H2. rewrite H7 in H6.
+ rewrite length_app in H6.
+ simpl in H6. rewrite plus_comm in H6. inversion H6.
+ reflexivity. assumption. assumption.
+Qed.
+
+
+Theorem rev_pal : forall X (l: list X),
+  l = rev l -> pal l.
+intros X l. pattern l. apply list_induction; intros.
+ apply pnil.  apply pone. 
+ rewrite <- cons_app_assoc in H0. rewrite rev_append in H0.
+ simpl in H0. inversion H0.
+ apply pcons.
+ apply H. rewrite snoc_append in H3.
+ apply app_r_eq in H3. apply H3.
+Qed.
+
+ 
 (** [] *)
 
 (** **** Exercise: 4 stars (subsequence) *)
@@ -1524,7 +1837,65 @@ Definition b_16 : beautiful 16 :=
       induction carefully!
 *)
 
-(* FILL IN HERE *)
+Inductive subseq : list nat -> list nat -> Prop :=
+  | empty_sub : forall l : list nat, subseq [] l
+  | cons_both : forall (x:nat) (s l: list nat), subseq s l -> subseq (x :: s) (x :: l)
+  | cons_r : forall (x:nat) (s l: list nat), subseq s l -> subseq s (x :: l)
+.
+
+
+
+Theorem subseq_refl : forall l: list nat, subseq l l. 
+Proof.  intros. induction l.
+  apply empty_sub.
+  apply cons_both.
+  apply IHl.
+Qed.
+
+Theorem cons_app : forall X (x: X) (l:list X),
+  x :: l = [x] ++ l.
+Proof. intros. reflexivity.
+Qed.
+
+Theorem app_r_nil : forall X (l: list X),
+  l ++ [] = l.
+Proof. intros. induction l. reflexivity. simpl. rewrite IHl. reflexivity.
+Qed.
+
+
+Theorem subseq_app : forall (l1 l2 l3: list nat),
+  subseq l1 l2 -> subseq l1 (l2 ++ l3).
+Proof. 
+intros.
+  induction H. apply empty_sub.
+  simpl. apply cons_both. apply IHsubseq.
+  simpl. apply cons_r. apply IHsubseq.
+Qed.
+
+
+
+
+Theorem subseq_trans : forall l1 l2 l3 : list nat,
+  subseq l1 l2 -> subseq l2 l3 -> subseq l1 l3.
+intros.  
+  generalize dependent l1. 
+  induction H0; intros.
+  Case "l2 = []".
+    inversion H.  apply empty_sub.
+  Case "subseq l2 l3 -> subseq (x::l2) (x::l2)". 
+    inversion H. apply empty_sub.
+    apply cons_both.  
+    apply IHsubseq. apply H3.
+    apply IHsubseq in H3.
+    apply cons_r.   apply H3.
+
+
+  apply IHsubseq in H.
+  apply cons_r.
+  apply H.
+Qed.
+      
+
 (** [] *)
 
 (** **** Exercise: 2 stars, optional (foo_ind_principle) *)
