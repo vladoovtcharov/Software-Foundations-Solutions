@@ -90,8 +90,22 @@ Print sample_proof.
 
 Theorem hoare_proof_sound : forall P c Q,
   hoare_proof P c Q -> {{P}} c {{Q}}.
-Proof.
-  (* FILL IN HERE *) Admitted.
+Proof. intros. hoare_proof_cases (induction X) Case.
+  Case "H_Skip". apply hoare_skip.
+  Case "H_Asgn". apply hoare_asgn.
+  Case "H_Seq". apply hoare_seq with (Q:= Q). apply IHX2. apply IHX1.
+  Case "H_If". apply hoare_if. apply IHX1. apply IHX2.
+  Case "H_While". apply hoare_while. apply IHX.
+  Case "H_Consequence". 
+    apply hoare_consequence with (P':=P') (Q':=Q'); try (apply IHX);
+    try(unfold assert_implies); try (assumption).      
+  Case "H_Consequence_pre".
+    apply hoare_consequence_pre with (P':=P'); try (apply IHX);
+    try(unfold assert_implies); try (assumption). 
+  Case "H_Consequence_post".
+    apply hoare_consequence_post with (Q':=Q'); try (apply IHX);
+    try(unfold assert_implies); try (assumption).
+Qed.
 (** [] *)
 
 (** We can also use Coq's reasoning facilities to prove metatheorems

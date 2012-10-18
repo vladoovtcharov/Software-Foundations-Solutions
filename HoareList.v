@@ -789,7 +789,73 @@ Proof.
   intros. simpl. apply snoc_equation.
 Qed.
 
-(* FILL IN HERE *)
+Definition list_reverse_program :=
+  WHILE (BIsCons (AId X)) DO
+    Y ::= ACons (AHead (AId X)) (AId Y);
+    X ::= ATail (AId X)
+  END.
+(*
+{{ X = l /\ Y = []}} =>
+  {{ l = rev Y ++ X}}
+  WHILE (BIsCons (AId X)) DO
+    Y ::= ACons (AHead (AId X)) (AId Y)
+    X ::= ATail (AId X)
+  END.
+{{ Y = rev l }}
+*)
+
+Theorem head_cons : forall st (l : list nat),
+  bassn (BIsCons (AId X)) st -> aslist (st X) = head (aslist (st X)) :: tail (aslist (st X)).
+Proof.  intros. inversion H. induction (st X). 
+  simpl in H1. inversion H1.
+  simpl. destruct l0. simpl in H1. inversion H1.
+  reflexivity.
+Qed.
+
+ Theorem rev_snoc : forall X : Type, 
+                     forall v : X, 
+                     forall s : list X,
+  rev (snoc s v) = v :: (rev s).
+Proof.
+  intros X v s. 
+  induction s. reflexivity.
+  simpl. rewrite IHs. reflexivity.
+Qed.
+
+Theorem rev_involutive : forall X : Type, forall l : list X,
+  rev (rev l) = l. 
+Proof.
+  intros X l. 
+  induction l. reflexivity.
+  simpl. rewrite rev_snoc. rewrite IHl. 
+  reflexivity.
+Qed.
+
+Theorem list_reverse_spec  : forall l : list nat,
+  {{fun st => aslist (st X) = l /\ aslist (st Y) = nil}} 
+  list_reverse_program 
+  {{fun st => aslist (st Y) = rev l}}.
+Proof. intros. unfold list_reverse_program.   
+  eapply hoare_consequence. apply hoare_while with (P:= fun st => l = rev (aslist (st Y)) ++ aslist (st X)).
+  eapply hoare_seq.
+
+    eapply hoare_consequence_pre. apply hoare_asgn.
+    unfold assn_sub. simpl. intros st H.
+    rewrite update_neq. apply H.
+    compute. reflexivity.
+    eapply hoare_consequence_pre. apply hoare_asgn.    
+    unfold assn_sub. simpl. intros st H.
+    rewrite snoc_equation. rewrite update_neq. 
+    rewrite <- head_cons. apply H. assumption.  apply H. compute. reflexivity.
+
+    intros st H. inversion H. rewrite H1. rewrite H0. reflexivity.
+
+    intros st H. inversion H. unfold bassn in H1.
+    simpl in H1. induction (aslist (st X)).
+    rewrite H0. rewrite append_nil. rewrite rev_involutive.
+     reflexivity.    
+    apply ex_falso_quodlibet. apply H1.    reflexivity.
+Qed.
 (** [] *)
 
 

@@ -1378,16 +1378,25 @@ Inductive ceval : state -> com -> state -> Prop :=
       ceval st c1 st' ->
       ceval st' (WHILE b1 DO c1 END) st'' ->
       ceval st (WHILE b1 DO c1 END) st''
-(* FILL IN HERE *)
-.
+  | E_UntilEnd : forall st st' b1 c1,
+      ceval st c1 st' ->
+      beval st' b1 = true ->
+      ceval st (REPEAT c1 UNTIL b1 END) st'
+  | E_UntilLoop : forall st st' st'' b1 c1,
+      ceval st c1 st' ->
+      beval st' b1 = false ->
+      ceval st' (REPEAT c1 UNTIL b1 END) st'' ->
+      ceval st (REPEAT c1 UNTIL b1 END) st''
+  .
+
 
 Tactic Notation "ceval_cases" tactic(first) ident(c) :=
   first;
   [ Case_aux c "E_Skip" | Case_aux c "E_Ass" | Case_aux c "E_Seq"
   | Case_aux c "E_IfTrue" | Case_aux c "E_IfFalse"
   | Case_aux c "E_WhileEnd" | Case_aux c "E_WhileLoop" 
-(* FILL IN HERE *)
-].
+  | Case_aux c "E_UntilEnd" | Case_aux c "E_UntilLoop"
+  ].
 
 (** A couple of definitions from above, copied here so they use the
     new [ceval]. *)
@@ -1413,14 +1422,44 @@ Definition ex1_repeat :=
 
 Theorem ex1_repeat_works :
   ex1_repeat / empty_state || update (update empty_state X 1) Y 1.
-Proof.
-  (* FILL IN HERE *) Admitted.
+Proof. unfold ex1_repeat.
+  apply E_UntilEnd. eapply E_Seq. apply E_Ass.
+  simpl. reflexivity.
+  apply E_Ass. reflexivity.
+  reflexivity.
+Qed.
 
 (** Now state and prove a theorem, [hoare_repeat], that expresses an
     appropriate proof rule for [repeat] commands.  Use [hoare_while]
     as a model, and try to make your rule as precise as possible. *)
 
-(* FILL IN HERE *)
+Lemma hoare_repeat : forall P Q b c,
+  {{ P }} c {{ Q }} -> ((fun st => Q st /\ ~(bassn b st)) ~~> P) -> 
+  {{ P }} REPEAT c UNTIL b END {{ fun st => Q st /\ (bassn b st) }}.
+Proof.
+  intros P Q b c Hhoare Qnb_P st st' He Hp.
+  remember (REPEAT c UNTIL b END) as rcom.
+  Check ceval_ind. 
+  ceval_cases (induction He) Case; try (inversion Heqrcom). subst.
+  Case "E_UntilEnd". split. apply Hhoare with (st:=st).
+    apply He. apply Hp. unfold bassn. apply H.
+    (* using, apply IHHe, for the above gets you stuck.  
+     When you follow the induction principle you realize that using this is saying:
+      c1 is the same program as Repeat c1
+    but we really only want to say they go to the same state when b is false  
+    *)
+  Case "E_UntilLoop". subst. apply IHHe2. reflexivity.
+     apply Qnb_P. split. apply Hhoare with (st:= st). apply He1. apply Hp.
+     unfold bassn. unfold not. intro. rewrite H0 in H. inversion H.
+Qed.
+ 
+(* 
+               {{P}} c {{Q}}
+              {{Q /\ ~b ~~> P}}
+         -----------------------------   (hoare_repeat)
+              {{P}} REPEAT c UNTIL b END {{Q /\ b}}
+
+*)
 
 (** For full credit, make sure (informally) that your rule can be used
     to prove the following _valid_ Hoare triple:
@@ -1430,6 +1469,15 @@ Proof.
     X ::= X - 1
   UNTIL X = 0 END
   {{ X = 0 /\ Y > 0 }}
+
+  let Q be Y > 0
+  and P be X > 0
+  then we need to show
+
+{{ X > 0 }} Y ::= X; X ::= X - 1 {{ Y > 0 }} (which is easy enough with the assignment rule)
+and
+( Y > 0 /\ X <> 0 ) ~~> (X > 0) which is true as well
+
 *)
 
 
